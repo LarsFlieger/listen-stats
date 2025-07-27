@@ -14,9 +14,26 @@
 
     <!-- Share button positioned near the top of the page.  It is hidden
          initially and becomes visible after analysis is complete. -->
-    <div class="share-container">
-      <button type="button" id="shareBtn" style="display:none;">Share</button>
-    </div>
+      <div class="share-container">
+        <button type="button" id="shareBtn" style="display:none;">Share</button>
+      </div>
+      <!-- Modal for choosing how to share the results -->
+      <div id="shareModal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" id="closeShareModal">&times;</span>
+          <h2>Share Results</h2>
+          <div class="share-option">
+            <button type="button" id="copyLinkBtn">Copy share URL</button>
+            <p class="note">Not shareable in most cases because URL is too long</p>
+          </div>
+          <div class="share-option">
+            <button type="button" id="downloadHtmlBtn">Download HTML file</button>
+          </div>
+          <div class="share-option">
+            <button type="button" id="downloadPdfBtn">Download PDF file</button>
+          </div>
+        </div>
+      </div>
     <p>
       Upload your <code>Streaming_History_Audio_*.json</code> files—or the
       entire <code>my_spotify_data.zip</code> export—from your Spotify privacy
