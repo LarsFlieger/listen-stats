@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify History Analyzer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Spotify History Analyzer</h1>
+
+    <!-- Share button positioned near the top of the page.  It is hidden
+         initially and becomes visible after analysis is complete. -->
+    <div class="share-container">
+      <button type="button" id="shareBtn" style="display:none;">Share</button>
+    </div>
+    <p>
+      Upload your <code>Streaming_History_Audio_*.json</code> files—or the
+      entire <code>my_spotify_data.zip</code> export—from your Spotify privacy
+      portal to explore detailed insights about your listening habits. All
+      processing happens locally in your browser – your data never leaves
+      your device.
+
+    </p>
+    <p class="tutorial">
+      <strong>How to obtain your data:</strong> Visit
+      <a href="https://www.spotify.com/account/privacy/" target="_blank">Spotify’s Privacy page</a>,
+      request your <em>Extended streaming history</em>, and download the file
+      named <code>my_spotify_data.zip</code>. Then upload it here to view
+      your stats. Advanced settings are hidden by default; you can reveal
+      them to adjust the date range, number of top items and streak gap.
+    </p>
+    <form id="uploadForm">
+      <label for="files">Select history files or ZIP export</label>
+      <input type="file" id="files" accept="application/json,application/zip,.json,.zip" multiple required>
+      <button type="button" id="toggleSettings">Show advanced options ▾</button>
+      <div id="advancedOptions" class="collapsed">
+        <div class="field">
+          <label for="start_date">Start date</label>
+          <input type="date" id="start_date">
+        </div>
+        <div class="field">
+          <label for="end_date">End date</label>
+          <input type="date" id="end_date">
+        </div>
+        <div class="field">
+          <label for="top_n">Number of top items</label>
+          <!-- Allow up to 250 items to be displayed -->
+          <input type="number" id="top_n" min="1" max="250" value="10">
+        </div>
+        <div class="field">
+          <label for="streak_gap">Maximum gap for streaks (minutes)</label>
+          <input type="number" id="streak_gap" min="1" max="120" value="30">
+        </div>
+      </div>
+      <button type="submit" id="analyzeBtn">Analyze History</button>
+      <div id="loading" class="loading" style="display:none;">
+        <p id="loadingText">Loading…</p>
+        <progress id="progressBar" value="0" max="100"></progress>
+      </div>
+    </form>
+
+    <div id="results" style="display:none;">
+      <h2>Summary</h2>
+      <div id="summary" class="summary"></div>
+      <h2>Top Songs & Artists</h2>
+      <div id="top-songs"></div>
+      <!-- Show more button now lives within the top songs section so it does
+           not appear beneath unrelated sections like Trending Songs.  It
+           toggles between showing the top 10 and top 250 items. 
+       <button type="button" id="showMoreBtn" style="display:none;">Show more</button>-->
+      <h2>Listening Streaks</h2>
+      <div id="streaks"></div>
+      <h2>Time-based Patterns</h2>
+      <div id="charts"></div>
+      <h2>Monthly Favorites</h2>
+      <div id="favorites"></div>
+      <h2>Unique Artists & Songs per Month</h2>
+      <div id="unique-month"></div>
+      <h2>Most Plays of a Single Song</h2>
+      <div id="top-day-week"></div>
+      <h2>Songs Often Listened Together</h2>
+      <div id="co-listening"></div>
+      <h2>Trending Songs</h2>
+      <div id="trending"></div>
+    </div>
+  </div>
+  <script src="js/plotly.min.js"></script>
+  <!-- Include JSZip for reading ZIP archives in the browser -->
+  <script src="js/jszip.min.js"></script>
+  <!-- Include pako for compressing and decompressing share data -->
+  <script src="js/pako.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

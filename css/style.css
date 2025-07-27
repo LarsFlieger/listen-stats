@@ -1,0 +1,203 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+}
+
+h1 {
+  margin-top: 0;
+  color: #1db954;
+}
+
+form {
+  margin-top: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+label {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+input[type="file"],
+input[type="date"],
+input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background-color: #1db954;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+button:hover {
+  background-color: #17a444;
+}
+
+#toggleSettings {
+  background-color: #666;
+  display: block;
+  margin-top: 10px;
+}
+
+#toggleSettings:hover {
+  background-color: #555;
+}
+
+#advancedOptions.collapsed {
+  display: none;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.summary .card {
+  flex: 1;
+  min-width: 200px;
+  padding: 15px;
+  background-color: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.summary .card h3 {
+  margin: 0;
+  font-size: 1.6em;
+  color: #1db954;
+}
+
+.summary .card p {
+  margin: 5px 0 0 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+table th,
+table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+table th {
+  background-color: #f0f0f0;
+}
+
+/* Loading indicator styles */
+.loading {
+  margin-top: 15px;
+}
+
+.loading progress {
+  width: 100%;
+  height: 12px;
+  appearance: none;
+}
+
+.loading progress::-webkit-progress-bar {
+  background-color: #eee;
+  border-radius: 5px;
+}
+
+.loading progress::-webkit-progress-value {
+  background-color: #1db954;
+  border-radius: 5px;
+}
+
+#loadingText {
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Show more button */
+#showMoreBtn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#showMoreBtn:hover {
+  background-color: #0062cc;
+}
+
+/* Share button */
+#shareBtn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#shareBtn:hover {
+  background-color: #e0a800;
+}
+
+.chart {
+  margin-top: 20px;
+}
+
+/* Position share button on the right of the page */
+.share-container {
+  text-align: right;
+  margin-top: 10px;
+}
+
+/* Share link input shown after generating a share URL */
+.share-link-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+.co-list ul {
+  list-style-type: disc;
+  margin-left: 20px;
+}
