@@ -35,6 +35,10 @@ let globalEndDateStr = '';
 // completes.
 let globalResults = null;
 
+// Share URL generated for the last analysis.  Populated when the user
+// opens the share dialog so subsequent actions can reuse it.
+let globalShareUrl = '';
+
 // Reference to the web worker responsible for heavy computations.  It
 // is lazily spawned when needed.
 let worker = null;
@@ -85,6 +89,16 @@ window.addEventListener('DOMContentLoaded', () => {
     topInput.value = '100';
     topInput.max = '100';
   }
+
+  // Share modal button bindings
+  const closeBtn = document.getElementById('shareClose');
+  if (closeBtn) closeBtn.onclick = closeShareModal;
+  const copyBtn = document.getElementById('copyShareUrlBtn');
+  if (copyBtn) copyBtn.onclick = copyShareUrl;
+  const htmlBtn = document.getElementById('downloadHtmlBtn');
+  if (htmlBtn) htmlBtn.onclick = downloadResultsHtml;
+  const pdfBtn = document.getElementById('downloadPdfBtn');
+  if (pdfBtn) pdfBtn.onclick = downloadResultsPdf;
 });
 
 /**
@@ -1067,13 +1081,12 @@ function renderResultsUI(results, topN, streakGap, startDateStr, endDateStr) {
   // Scroll to results
   document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 
-  // Display and configure the share button.  This creates a URL
-  // containing the compressed results data in the hash so it can
-  // be bookmarked or shared.  Clicking copies the link to the
-  // clipboard.
+  // Display and configure the share button.  When clicked a modal is
+  // shown offering multiple ways to share the current results.
   const shareBtn = document.getElementById('shareBtn');
   shareBtn.style.display = 'inline-block';
   shareBtn.textContent = 'Share';
+
   shareBtn.onclick = async () => {
     try {
       /**
@@ -1182,14 +1195,10 @@ function renderResultsUI(results, topN, streakGap, startDateStr, endDateStr) {
       console.log({ url })
       // Update hash so the link appears in the address bar
       window.location.hash = `data=${encoded}`;
-      // Attempt to use the clipboard API when available
-      try {
-        await navigator.clipboard.writeText(url);
-        window.alert("Share link copied to clipboard!");
-      } catch (err) {
-        console.warn('Clipboard write failed:', err);
-        window.alert("Error copying share link to clipboard.");
-      }
+      globalShareUrl = url;
+
+      // Show modal with share options
+      document.getElementById('shareModal').style.display = 'block';
 
     } catch (err) {
       console.error('Failed to generate share link:', err);
@@ -1844,4 +1853,58 @@ function getISOWeekYear(date) {
   const tmp = new Date(date.valueOf());
   tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
   return tmp.getFullYear();
+}
+
+// --- Share modal helpers ---------------------------------------------------
+
+// Close the share dialog
+function closeShareModal() {
+  document.getElementById('shareModal').style.display = 'none';
+}
+
+// Copy the share URL to the clipboard
+async function copyShareUrl() {
+  try {
+    await navigator.clipboard.writeText(globalShareUrl);
+    alert('Share link copied to clipboard!');
+  } catch (err) {
+    console.warn('Clipboard write failed:', err);
+    alert('Error copying share link to clipboard.');
+  }
+}
+
+// Download the results as a standalone HTML file
+async function downloadResultsHtml() {
+  try {
+    const cssText = await fetch('css/style.css').then(r => r.text());
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ListenStats Results</title><style>${cssText}</style></head><body>${document.getElementById('results').innerHTML}</body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'listen-stats.html';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    a.remove();
+  } catch (err) {
+    console.error('Failed to create HTML download:', err);
+    alert('Unable to generate HTML file.');
+  }
+}
+
+// Create a print-ready window for saving to PDF
+async function downloadResultsPdf() {
+  try {
+    const cssText = await fetch('css/style.css').then(r => r.text());
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ListenStats Results</title><style>${cssText}</style></head><body>${document.getElementById('results').innerHTML}</body></html>`;
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.print();
+  } catch (err) {
+    console.error('Failed to open print window:', err);
+    alert('Unable to create PDF.');
+  }
 }

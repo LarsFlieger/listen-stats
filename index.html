@@ -17,6 +17,26 @@
     <div class="share-container">
       <button type="button" id="shareBtn" style="display:none;">Share</button>
     </div>
+
+    <!-- Share options modal -->
+    <div id="shareModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span id="shareClose" class="close">&times;</span>
+        <h2>Share Results</h2>
+        <div class="option">
+          <p><strong>1. URL</strong> <em>(often not shareable due to length)</em></p>
+          <button id="copyShareUrlBtn">Copy URL</button>
+        </div>
+        <div class="option">
+          <p><strong>2. HTML file</strong></p>
+          <button id="downloadHtmlBtn">Download HTML</button>
+        </div>
+        <div class="option">
+          <p><strong>3. PDF file</strong></p>
+          <button id="downloadPdfBtn">Save PDF</button>
+        </div>
+      </div>
+    </div>
     <p>
       Upload your <code>Streaming_History_Audio_*.json</code> files—or the
       entire <code>my_spotify_data.zip</code> export—from your Spotify privacy
