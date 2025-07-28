@@ -85,6 +85,26 @@ window.addEventListener('DOMContentLoaded', () => {
     topInput.value = '100';
     topInput.max = '100';
   }
+
+  const modal = document.getElementById('shareModal');
+  const closeBtn = document.getElementById('closeShareModal');
+  const copyBtn = document.getElementById('copyUrlBtn');
+  const htmlBtn = document.getElementById('downloadHtmlBtn');
+  const pdfBtn = document.getElementById('downloadPdfBtn');
+
+  if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+  if (copyBtn) copyBtn.onclick = async () => {
+    try {
+      const url = await buildShareUrl();
+      await navigator.clipboard.writeText(url);
+      alert('Share link copied to clipboard!');
+    } catch (err) {
+      alert('Unable to generate share link.');
+    }
+  };
+  if (htmlBtn) htmlBtn.onclick = downloadHtml;
+  if (pdfBtn) pdfBtn.onclick = downloadPdf;
+  window.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 });
 
 /**
@@ -1074,127 +1094,8 @@ function renderResultsUI(results, topN, streakGap, startDateStr, endDateStr) {
   const shareBtn = document.getElementById('shareBtn');
   shareBtn.style.display = 'inline-block';
   shareBtn.textContent = 'Share';
-  shareBtn.onclick = async () => {
-    try {
-      /**
-       * Build a trimmed version of the results object for sharing.
-       * Respect the current globalTopN selection so the recipient
-       * sees the same number of items.  Limit to 100 items to
-       * avoid excessively long URLs.  Song URIs are included
-       * only for the songs in the trimmed lists.  Co‑listening
-       * data is reduced to a small set of base songs and
-       * co‑listens.
-       */
-      const shareData = (function createShareData(res, limit) {
-        // Determine how many top items to include – respect the
-        // user’s choice up to 100.
-        const n = Math.min(limit || 10, 100);
-        const trimArray = (arr) => Array.isArray(arr) ? arr.slice(0, Math.min(n, arr.length)) : arr;
-        // Collect all songs we need URIs for
-        const songSet = new Set();
-        trimArray(res.topPlaytime).forEach(([s]) => songSet.add(s));
-        trimArray(res.topPlaycount).forEach(([s]) => songSet.add(s));
-        trimArray(res.incognitoTop).forEach(([s]) => songSet.add(s));
-        trimArray(res.skippedTop).forEach(([s]) => songSet.add(s));
-        trimArray(res.topDay).forEach(([key]) => {
-          const parts = String(key).split('|||');
-          if (parts[0]) songSet.add(parts[0]);
-        });
-        trimArray(res.topWeek).forEach(([key]) => {
-          const parts = String(key).split('|||');
-          if (parts[0]) songSet.add(parts[0]);
-        });
-        // Trending songs
-        (res.trending || []).slice(0, 10).forEach(([s]) => songSet.add(s));
-        // Favorite song per month
-        Object.values(res.favorites || {}).forEach(([song]) => songSet.add(song));
-        // Trim co‑listens – limit to 20 base songs and 5 co‑listens each
-        const trimCoListens = (co) => {
-          const result = {};
-          const coLimit = 5;
-          // Always include co-listens for songs in the trimmed topPlaytime list.
-          const requiredBases = trimArray(res.topPlaytime).map(([s]) => s);
-          // Additional bases can be added up to a maximum (e.g. 20) but are not strictly necessary.
-          const maxBases = 20;
-          const allBases = Object.keys(co);
-          const extraBases = allBases.filter(b => !requiredBases.includes(b)).slice(0, Math.max(0, maxBases - requiredBases.length));
-          const bases = requiredBases.concat(extraBases);
-          bases.forEach(base => {
-            if (!co[base]) return;
-            songSet.add(base);
-            const list = co[base] || [];
-            result[base] = list.slice(0, coLimit);
-            list.slice(0, coLimit).forEach(([s]) => songSet.add(s));
-          });
-          return result;
-        };
-        const trimmedUris = {};
-        if (res.songUris) {
-          Object.keys(res.songUris).forEach(song => {
-            if (songSet.has(song)) trimmedUris[song] = res.songUris[song];
-          });
-        }
-        return {
-          ...res,
-          totalMinutes: res.totalMinutes,
-          uniqueArtists: res.uniqueArtists,
-          uniqueSongs: res.uniqueSongs,
-          topPlaytime: trimArray(res.topPlaytime),
-          topPlaycount: trimArray(res.topPlaycount),
-          incognitoTop: trimArray(res.incognitoTop),
-          skippedTop: trimArray(res.skippedTop),
-          topArtists: trimArray(res.topArtists),
-          topArtistsByCount: trimArray(res.topArtistsByCount),
-          streaks: trimArray(res.streaks),
-          streakCounts: res.streakCounts,
-          byHour: res.byHour,
-          avgByMonth: res.avgByMonth,
-          favorites: res.favorites,
-          uniquesMonth: res.uniquesMonth,
-          topDay: trimArray(res.topDay),
-          topWeek: trimArray(res.topWeek),
-          coListens: trimCoListens(res.coListens || {}),
-          playsCount: res.playsCount,
-          skipsCount: res.skipsCount,
-          regularCount: res.regularCount,
-          incognitoCount: res.incognitoCount,
-          trending: (res.trending || []).slice(0, 10),
-          platformCounts: res.platformCounts,
-          countryCounts: res.countryCounts,
-          startReasonCounts: res.startReasonCounts,
-          endReasonCounts: res.endReasonCounts,
-          shuffleCounts: res.shuffleCounts,
-          offlineCounts: res.offlineCounts,
-          songUris: trimmedUris
-          ,
-          // Store the selected number of top items so the share page can
-          // display the same number of entries.  Limit to 100 to keep
-          // the URL manageable.
-          selectedTopN: n
-        };
-      })(globalResults, globalTopN);
-      console.log({ shareData })
-      const json = JSON.stringify(shareData);
-      const deflated = pako.deflate(json, { to: 'string' });
-      const base64 = btoa(deflated);
-      const encoded = encodeURIComponent(base64);
-      const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
-      console.log({ url })
-      // Update hash so the link appears in the address bar
-      window.location.hash = `data=${encoded}`;
-      // Attempt to use the clipboard API when available
-      try {
-        await navigator.clipboard.writeText(url);
-        window.alert("Share link copied to clipboard!");
-      } catch (err) {
-        console.warn('Clipboard write failed:', err);
-        window.alert("Error copying share link to clipboard.");
-      }
-
-    } catch (err) {
-      console.error('Failed to generate share link:', err);
-      alert('Unable to generate share link. Please try again.');
-    }
+  shareBtn.onclick = () => {
+    document.getElementById('shareModal').style.display = 'block';
   };
 }
 
@@ -1844,4 +1745,124 @@ function getISOWeekYear(date) {
   const tmp = new Date(date.valueOf());
   tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
   return tmp.getFullYear();
+}
+
+// ----- Share helpers -----
+
+function createShareData(res, limit) {
+  const n = Math.min(limit || 10, 100);
+  const trimArray = (arr) => Array.isArray(arr) ? arr.slice(0, Math.min(n, arr.length)) : arr;
+  const songSet = new Set();
+  trimArray(res.topPlaytime).forEach(([s]) => songSet.add(s));
+  trimArray(res.topPlaycount).forEach(([s]) => songSet.add(s));
+  trimArray(res.incognitoTop).forEach(([s]) => songSet.add(s));
+  trimArray(res.skippedTop).forEach(([s]) => songSet.add(s));
+  trimArray(res.topDay).forEach(([key]) => {
+    const parts = String(key).split('|||');
+    if (parts[0]) songSet.add(parts[0]);
+  });
+  trimArray(res.topWeek).forEach(([key]) => {
+    const parts = String(key).split('|||');
+    if (parts[0]) songSet.add(parts[0]);
+  });
+  (res.trending || []).slice(0, 10).forEach(([s]) => songSet.add(s));
+  Object.values(res.favorites || {}).forEach(([song]) => songSet.add(song));
+  const trimCoListens = (co) => {
+    const result = {};
+    const coLimit = 5;
+    const requiredBases = trimArray(res.topPlaytime).map(([s]) => s);
+    const maxBases = 20;
+    const allBases = Object.keys(co);
+    const extraBases = allBases.filter(b => !requiredBases.includes(b)).slice(0, Math.max(0, maxBases - requiredBases.length));
+    const bases = requiredBases.concat(extraBases);
+    bases.forEach(base => {
+      if (!co[base]) return;
+      songSet.add(base);
+      const list = co[base] || [];
+      result[base] = list.slice(0, coLimit);
+      list.slice(0, coLimit).forEach(([s]) => songSet.add(s));
+    });
+    return result;
+  };
+  const trimmedUris = {};
+  if (res.songUris) {
+    Object.keys(res.songUris).forEach(song => {
+      if (songSet.has(song)) trimmedUris[song] = res.songUris[song];
+    });
+  }
+  return {
+    ...res,
+    totalMinutes: res.totalMinutes,
+    uniqueArtists: res.uniqueArtists,
+    uniqueSongs: res.uniqueSongs,
+    topPlaytime: trimArray(res.topPlaytime),
+    topPlaycount: trimArray(res.topPlaycount),
+    incognitoTop: trimArray(res.incognitoTop),
+    skippedTop: trimArray(res.skippedTop),
+    topArtists: trimArray(res.topArtists),
+    topArtistsByCount: trimArray(res.topArtistsByCount),
+    streaks: trimArray(res.streaks),
+    streakCounts: res.streakCounts,
+    byHour: res.byHour,
+    avgByMonth: res.avgByMonth,
+    favorites: res.favorites,
+    uniquesMonth: res.uniquesMonth,
+    topDay: trimArray(res.topDay),
+    topWeek: trimArray(res.topWeek),
+    coListens: trimCoListens(res.coListens || {}),
+    playsCount: res.playsCount,
+    skipsCount: res.skipsCount,
+    regularCount: res.regularCount,
+    incognitoCount: res.incognitoCount,
+    trending: (res.trending || []).slice(0, 10),
+    platformCounts: res.platformCounts,
+    countryCounts: res.countryCounts,
+    startReasonCounts: res.startReasonCounts,
+    endReasonCounts: res.endReasonCounts,
+    shuffleCounts: res.shuffleCounts,
+    offlineCounts: res.offlineCounts,
+    songUris: trimmedUris,
+    selectedTopN: n
+  };
+}
+
+async function buildShareUrl() {
+  try {
+    const shareData = createShareData(globalResults, globalTopN);
+    const json = JSON.stringify(shareData);
+    const deflated = pako.deflate(json, { to: 'string' });
+    const base64 = btoa(deflated);
+    const encoded = encodeURIComponent(base64);
+    const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
+    window.location.hash = `data=${encoded}`;
+    return url;
+  } catch (err) {
+    console.error('Failed to generate share link:', err);
+    throw err;
+  }
+}
+
+async function downloadHtml() {
+  const cssText = await fetch('css/style.css').then(r => r.text()).catch(() => '');
+  const content = document.getElementById('results').innerHTML;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ListenStats</title><style>${cssText}</style></head><body><div class="container">${content}</div></body></html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'listen-stats.html';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadPdf() {
+  const cssText = await fetch('css/style.css').then(r => r.text()).catch(() => '');
+  const content = document.getElementById('results').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>ListenStats</title><style>${cssText}</style></head><body><div class="container">${content}</div></body></html>`);
+  win.document.close();
+  win.focus();
+  win.print();
 }
